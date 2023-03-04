@@ -34,4 +34,5 @@ manual:
     - docker push $CI_REGISTRY_IMAGE/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHA
     - docker rmi $DOCKER_IMAGE_NAME:$CI_COMMIT_SHA
   rules:
+    - if $CI_COMMIT_SHA != null
     - when: manual
