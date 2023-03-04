@@ -1,0 +1,8 @@
+.dockerignore
+
+#sudo docker build -t server .
+#sudo docker run -p 8080:8080 server
+#docker image ls
+#sudo docker rmi <Image ID>
+
+#Py-hejBVv8mBnPzTxeiH - токен
