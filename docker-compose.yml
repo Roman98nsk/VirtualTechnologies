@@ -1,0 +1,41 @@
+version: "3"
+
+services:
+  traefik:
+    image: "traefik:latest"
+    command:
+      - "--api.insecure=true" #позволяет получить доступ к панели инструментов Traefik - это упрощает отладку,
+                              #но должно быть отключено за пределами среды разработки по соображениям безопасности.
+      - "--providers.docker=true" #включает обнаружение конфигурации Docker
+      - "--providers.docker.exposedbydefault=false" #не выставлять службы Docker по умолчанию
+      - "--entrypoints.web.address=:80" #создать точку входа с именем web, прослушивая:80
+
+    # открываем порт 80, чтобы разрешить доступ к webточке входа,
+    # и порт 8080, так как это порт панели управления по умолчанию.
+    ports:
+      - "80:80"
+      - "8080:8080"
+
+    # подключение тома с docker.sock, чтобы Traefik мог общаться
+    # с демоном Docker (и получать информацию о запущенных
+    # контейнерах).
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  server:
+    #build: /home/roman/Рабочий стол/4 курс/8 семестр/virt  # путь к файлу Dockerfile, который нужно использовать для создания образа.
+    #command: python3 ./server.py   #Следующая команда означает запуск "python ./server.py".
+    image: registry.csc.sibsutis.ru/iv921s29/virt/lab_2:lab_2
+    labels:
+      - "traefik.enable=true" #это то, что мы хотели бы разоблачить
+      - "traefik.http.services.server.loadbalancer.server.port=8090"  #указать правило, используемое для сопоставления запроса с данным сервисом.
+                                                                      #Часть whoami— это имя, которое вы можете указать, вы также можете настроить Host под свои нужды.
+                                                                      # Traefik также поддерживает другие сопоставители, например path.
+      - "traefik.http.routers.server.rule=Host(`localhost`)"
+      - "traefik.http.routers.server.entrypoints=web" #какую точку входа следует использовать для whoamiсервиса.
+  whoami:
+    image: "traefik/whoami"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`localhost`) && Path(`/app`)"
+      - "traefik.http.routers.whoami.entrypoints=web"

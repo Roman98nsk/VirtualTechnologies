@@ -1,4 +1,5 @@
 FROM python:3.6.9
-WORKDIR /home/roman/Рабочий стол/4 курс/8 семестр/ТехВирт/Приложение/lab2
+WORKDIR /usr/src/app/
 COPY server.py .
+EXPOSE 80
 CMD ["python3", "server.py"]
