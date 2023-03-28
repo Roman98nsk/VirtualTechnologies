@@ -1,13 +1,13 @@
-image: docker:latest
+#image: docker:latest
  
-services:
-  - docker:dind
+#services:
+  #- docker:dind
  
-variables:
-  DOCKER_IMAGE_NAME: lab_2
+#variables:
+  #DOCKER_IMAGE_NAME: lab_2
  
-stages:
-  - build
+#stages:
+  #- build
  
 build:
   stage: build

@@ -4,7 +4,16 @@
 #sudo docker build -t server .
 #sudo docker run -p 8080:8080 server
 #docker image ls
-#sudo docker rmi <Image ID>
+#sudo docker rmi <-f> <Image ID>
+
+#http://localhost:
+
+#Список запущенных контейнеров
+#docker ps
+#docker ps -a
+
+#Остановить контейнер
+#docker stop <name/ID>
 
 #Py-hejBVv8mBnPzTxeiH - токен
 
@@ -37,3 +46,18 @@
 # Останавливает, но не удаляет сервисы, запущенные с помощью up
 # Их можно запустить снова с помощью docker-compose start
 #docker compose stop
+
+#Создание образа без root
+#docker build -t nonrootuser .
+
+#Запуск образа без root
+#docker run -it nonrootuser /bin/bash
+
+#Запуск контейнера redis
+#docker run --name myredis -idt redis
+
+#Зайти под redis
+#docker exec -it myredis /bin/bash
+
+#Просмотр пользователя
+#ps -ef
