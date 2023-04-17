@@ -1,0 +1,107 @@
+# Файл docker-compose должен начинаться с тега версии.
+
+version: "3.5"
+
+# Следует учитывать, что docker-composes работает с сервисами.
+# 1 сервис = 1 контейнер.
+# Сервисом может быть клиент, сервер, сервер баз данных...
+# Раздел, в котором будут описаны сервисы, начинается с 'services'.
+
+services:
+
+
+    # Вспомните о том, что в качестве порта в 'server/server.py' указан порт 1234.
+    # Если мы хотим обратиться к серверу с нашего компьютера (находясь за пределами контейнера),
+    # мы должны организовать перенаправление этого порта на порт компьютера.
+    # Сделать это нам поможет ключевое слово 'ports'.
+    # При его использовании применяется следующая конструкция: [порт компьютера]:[порт контейнера]
+    # В нашем случае нужно использовать порт компьютера 1234 и организовать его связь с портом
+    # 1234 контейнера (так как именно на этот порт сервер
+    # ожидает поступления запросов).
+
+  traefik:
+    image: "traefik:v2.6"
+    command:
+      # --api.insecure=true - позволяет получить доступ к панели
+      # инструментов Traefik - это упрощает отладку, но должно
+      # быть отключено за пределами среды разработки по
+      # соображениям безопасности.
+      # --providers.docker=true- включает обнаружение конфигурации Docker
+      # --providers.docker.exposedbydefault=false- не выставлять
+      # службы Docker по умолчанию
+      # --entrypoints.web.address=:80- создать точку входа с
+      # именем web, прослушивая:80
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    # открываем порт 80, чтобы разрешить доступ к webточке входа,
+    # и порт 8080, так как это порт панели управления по умолчанию.
+    ports:
+      - "82:80"
+      - "8080:8080"
+    # подключение тома с docker.sock, чтобы Traefik мог общаться
+    # с демоном Docker (и получать информацию о запущенных
+    # контейнерах).
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  # Как уже было сказано, мы собираемся создать клиентское и серверное приложения.
+  # Это означает, что нам нужно два сервиса.
+  # Первый сервис (контейнер): сервер.
+  # Назвать его можно так, как нужно разработчику.
+  # Понятное название сервиса помогает определить его роль.
+  # Здесь мы, для именования соответствующего сервиса, используем ключевое слово 'server'.
+
+  server:
+
+    # Ключевое слово "build" позволяет задать
+    # путь к файлу Dockerfile, который нужно использовать для создания образа,
+    # который позволит запустить сервис.
+    # Здесь 'server/' соответствует пути к папке сервера,
+    # которая содержит соответствующий Dockerfile.
+
+    build: server/
+    # image: registry.csc.sibsutis.ru/iv921s05/lab_1:v1
+
+    # Команда, которую нужно запустить после создания образа.
+    # Следующая команда означает запуск "python ./server.py".
+
+    # command: python3 ./http_server.py
+
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.http.services.server.loadbalancer.server.port=82"
+      - "traefik.http.routers.server.rule=Host(`localhost`)"
+      - "traefik.http.routers.server.entrypoints=web"
+
+    environment:
+      DB_HOST: "db_ps"
+      DB_PORT: "5432"
+
+  whoami:
+    image: "traefik/whoami"
+    # traefik.enable=true- скажите Траефику, что это то, что
+    #  мы хотели бы разоблачить
+    # traefik.http.routers.whoami.rule=Host("localhost")-
+    # указать правило, используемое для сопоставления запроса с
+    # данным сервисом. Часть whoami— это имя, которое вы можете
+    # указать, вы также можете настроить Host под свои нужды.
+    # Traefik также поддерживает другие сопоставители, например
+    # path.
+    # traefik.http.routers.whoami.entrypoints=web- какую точку
+    # входа следует использовать для whoamiсервиса.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`localhost`) && Path(`/app`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+
+  db_ps:
+    container_name: db_ps
+    image: postgres
+    # ports:
+    #   - "5531:5432"
+    environment:
+      POSTGRES_DB: "bd_ps"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_USER: "admin"
